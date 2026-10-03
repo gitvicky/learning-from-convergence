@@ -13,6 +13,7 @@ destination = website / "Blog" / "assets" / "learning_from_convergence"
 destination.mkdir(parents=True, exist_ok=True)
 results = Path(__file__).parent / "results"
 for name in ("noisy_expectation.svg", "noisy_expectation.png", "budget_allocation.svg",
-             "budget_allocation.png", "allocation_table.md"):
+             "budget_allocation.png", "allocation_table.md", "random_walk.svg", "random_walk.png",
+             "_walk_demo.qmd", "walk_demo.js", "walk_demo.css"):
     shutil.copy2(results / name, destination / name)
-print(f"Copied five generated assets to {destination}")
+print(f"Copied ten generated assets to {destination}")

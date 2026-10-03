@@ -1,0 +1,53 @@
+<section id="walk-explorer" aria-labelledby="walk-explorer-title">
+  <h4 id="walk-explorer-title">Explore complete random walks</h4>
+  <div class="walk-controls">
+    <label for="walk-start">Starting site <output id="walk-start-value" for="walk-start">16</output>
+      <input id="walk-start" type="range" min="1" max="31" step="1" value="16">
+    </label>
+    <label for="walk-count">Trajectories <output id="walk-count-value" for="walk-count">64</output>
+      <input id="walk-count" type="range" min="1" max="256" step="1" value="64">
+    </label>
+    <label for="walk-metric">Quantity
+      <select id="walk-metric"><option value="0">Exit-right probability</option><option value="1">Mean exit time</option></select>
+    </label>
+    <label for="walk-model">Training seed
+      <select id="walk-model" aria-describedby="walk-model-note">
+        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+      </select>
+    </label>
+  </div>
+  <div class="walk-actions">
+    <button id="walk-resample" type="button">Resample walks</button>
+    <button id="walk-animate" type="button" aria-pressed="false">Animate sampling</button>
+  </div>
+  <dl class="walk-values" aria-live="polite" aria-atomic="true">
+    <div><dt>Monte Carlo</dt><dd id="walk-mc-value">—</dd></div>
+    <div><dt>Learned model</dt><dd id="walk-model-value">—</dd></div>
+    <div><dt>Exact expectation</dt><dd id="walk-exact-value">—</dd></div>
+  </dl>
+  <div class="walk-plots">
+    <figure>
+      <canvas id="walk-paths" role="img" aria-label="Symmetric random walks stop on reaching either boundary.">Walks between sites 0 and 32.</canvas>
+      <figcaption id="walk-path-caption">Selected trajectories</figcaption>
+    </figure>
+    <figure>
+      <svg id="walk-map" role="img" aria-labelledby="walk-map-title walk-map-description">
+        <title id="walk-map-title">Expectation across starting sites</title>
+        <desc id="walk-map-description">The trained model and exact expectation map, with the current Monte Carlo estimate.</desc>
+      </svg>
+      <figcaption class="walk-legend"><span class="walk-line walk-model-line">Model</span><span class="walk-line walk-exact-line">Exact</span><span class="walk-dot">MC at selected site</span></figcaption>
+    </figure>
+  </div>
+  <figure class="walk-convergence">
+    <svg id="walk-trace" role="img" aria-labelledby="walk-trace-title walk-trace-description">
+      <title id="walk-trace-title">Convergence at the selected starting site</title>
+      <desc id="walk-trace-description">Running Monte Carlo estimates from complete trajectories, compared with the model and exact expectation.</desc>
+    </svg>
+    <figcaption class="walk-legend"><span class="walk-line">Running MC</span><span class="walk-line walk-model-line">Fixed model</span><span class="walk-line walk-exact-line">Exact</span></figcaption>
+  </figure>
+  <p id="walk-work-summary" class="walk-detail"></p>
+  <p id="walk-model-note" class="walk-detail">Each model was trained on 4,096 complete trajectories across 31 starting sites. Resampling changes the MC draws; model weights stay fixed. Estimates include only complete trajectories, added in a fixed order. Animation timing does not represent simulation cost.</p>
+  <noscript>Enable JavaScript to run the explorer. The static figure and companion Python experiment remain available.</noscript>
+  <script id="walk-model-data" type="application/json">__WALK_MODELS__</script>
+</section>

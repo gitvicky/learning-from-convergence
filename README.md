@@ -21,15 +21,18 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python experiments.py
+python random_walk.py
+python build_interactive.py
 python verify.py
 ```
 
 The reference run used Python 3.12.7, NumPy 1.26.4, PyTorch 2.5.1, and Matplotlib 3.10.8.
-The experiments took about 13 seconds on the development machine, excluding import/font-cache time.
+The Gaussian experiments took about 13 seconds and the random-walk experiment about 9 seconds
+on the development machine, excluding import/font-cache time.
 Fixed seeds and deterministic CPU operations make repeat runs reproducible within that environment;
 floating-point results may differ across platforms or dependency versions.
 
-## One problem, two figures
+## Gaussian expectations and simulation allocation
 
 For `X | a ~ Normal(a, 1)`, the exact expectation is `F(a) = a² + 1`.
 The label at a configuration is the mean of `N` simulated values of `X²`.
@@ -69,6 +72,61 @@ These runs show that one-sample labels can learn an accurate map. They do not sh
 `N=1` is optimal. Here the lowest mean error occurs at `(64,64)` and seed distributions overlap.
 Do not interpret this small illustrative study as a statistically established ranking.
 
+## Complete random walks: two expectations from one trajectory
+
+A symmetric walk starts at an integer `x` between absorbing boundaries `0` and `L=32`.
+Each transition moves left or right with equal probability. Simulate until absorption,
+without a time cutoff. One trajectory supplies two unbiased labels: an indicator of
+exiting at the right boundary and the exit time in steps. Their exact expectations are
+`x/L` and `x*(L-x)`; see [Aldous and Fill, §5.1](https://www.stat.berkeley.edu/users/aldous/RWG/Book_Ralph/Ch5.S1.html).
+
+`random_walk.py` trains a `1 → 32 → 32 → 2` tanh MLP on 4,096 independent trajectories
+per seed. Starting sites are sampled uniformly from the 31 interior sites, so sites
+recur. The input is divided by 32; the two output labels are divided by 1 and 1,024.
+Training minimizes their mean squared error using full-batch Adam, learning rate
+`0.01`, and 800 updates. Exact expectations enter only evaluation and plotting.
+
+![Learning the two random-walk expectations](results/random_walk.png)
+
+Relative L2 errors across all 31 sites, mean ± sample SD over seeds 0–7:
+
+| Quantity | Relative error |
+|---|---:|
+| Exit-right probability | 1.66% ± 0.45% |
+| Mean exit time | 3.87% ± 1.07% |
+
+Seed 0 uses 716,131 transitions; across seeds, transition counts range from 700,141
+to 734,694. Equal trajectory counts therefore do not imply equal simulation costs.
+This finite configuration space illustrates pooling noisy observations across sites;
+the experiment does not establish an efficiency advantage over direct simulation.
+
+### Interactive explorer
+
+Open `results/walk_demo.html` in a browser after running `build_interactive.py`.
+It also works when served with `python -m http.server`. No network connection or
+Python backend is required to interact with the built page.
+
+Choose a starting site, 1–256 trajectories, either quantity, and a model training seed.
+Resample to change the MC draws or animate their addition. The display shows complete
+paths, the expectation map, and the running MC estimate compared with the frozen model.
+All eight models use the actual exported trained weights, evaluated directly in JavaScript;
+`verify.py` checks those weights against the saved PyTorch predictions.
+
+The source files are [`interactive/walk_demo.html`](interactive/walk_demo.html),
+[`interactive/walk_demo.css`](interactive/walk_demo.css), and
+[`interactive/walk_demo.js`](interactive/walk_demo.js). The browser generates 256 complete
+walks with Mulberry32, initially seeded with 17; the count slider selects a prefix.
+Changing the starting site regenerates this stream and resampling increments the seed.
+The browser draws are separate from training and use a different RNG from Python.
+Model weights remain fixed when samples change. Raw model predictions are displayed
+without clipping or substituting the exact formulas.
+
+Animation adds complete trajectories in their predetermined order. Its visual timing
+does not represent transition costs. A partially animated path is excluded from every
+MC mean until it reaches a boundary, avoiding selection based on which paths finish
+fastest. Keyboard controls, plot descriptions, reduced-motion behavior, and a static
+figure fallback are included.
+
 ## Jensen bias without another learned model
 
 At `a=0, N=1`, the estimator is `Z²` with `Z ~ Normal(0,1)`.
@@ -96,10 +154,16 @@ These diagnostic draws are separate from each model's simulation budget.
 fit metrics in `metrics.csv`, the exact and predicted grid values in `predictions.npz`,
 a generated Markdown results table, and settings/versions/Jensen diagnostics in `summary.json`.
 The committed results are from the documented reference run.
+`random_walk.py` also saves all eight fits, transition counts, model weights, and
+the seed-0 starting sites and individual trajectory labels. `build_interactive.py`
+embeds the model weights in a standalone HTML page and a Quarto include.
 
 `verify.py` checks the budget ledger, recomputes all test errors and seed summaries from
 the saved curves, independently checks the Gaussian moments, and compares the numerical
 Jensen gap with its exact value. It does not demand a particular allocation ranking.
+For the walk example it independently solves the finite-state harmonic and Poisson
+equations, checks simulation means against those solutions, recomputes all model errors,
+and checks the transition ledger and exported weights.
 
 To copy regenerated figures and the table into a local website checkout:
 
@@ -107,7 +171,7 @@ To copy regenerated figures and the table into a local website checkout:
 python export_site.py /path/to/website
 ```
 
-This copies only the two figures (SVG/PNG) and generated table to
+This copies the three figures (SVG/PNG), generated table, and interactive include/CSS/JS to
 `Blog/assets/learning_from_convergence/`. Article text is maintained in the website repository.
 
 ## Statistical scope
