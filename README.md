@@ -1,7 +1,7 @@
-# Learning from Convergence
+# Learning without Convergence
 
 Reproducible companion experiments for Vignesh Gopakumar's blog post
-**Learning from Convergence: Learning deterministic expectations from deliberately noisy Monte Carlo estimates**.
+**Learning without Convergence: Learning deterministic expectations from deliberately noisy Monte Carlo estimates**.
 
 [Website repository](https://github.com/gitvicky/website) ·
 [PTNO paper](https://arxiv.org/abs/2609.40090)
